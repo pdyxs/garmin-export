@@ -1,0 +1,51 @@
+name: Daily Garmin to Google Sheets Sync
+
+on:
+  # Run daily at 6 AM UTC (adjust to your timezone preference)
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run sync script
+        env:
+          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          SHEET_NAME: ${{ secrets.SHEET_NAME }}
+          USER_AGE: ${{ secrets.USER_AGE }}
+          USER_MAX_HR: ${{ secrets.USER_MAX_HR }}
+        run: |
+          python sync_to_sheets.py
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ Sync completed successfully!"
+          echo "Updated last 7 days of Garmin data in Google Sheets"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Sync failed. Check the logs above for details."
+          exit 1
