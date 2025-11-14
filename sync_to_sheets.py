@@ -289,19 +289,24 @@ try:
   for row in data_rows:
     date_str = row['date']
 
-    # Convert row dict to list in correct column order
-    row_values = [str(row.get(field, '')) if row.get(field) is not None else ''
-                  for field in FIELDNAMES]
+    # Convert row dict to list in correct column order, preserving types
+    row_values = []
+    for field in FIELDNAMES:
+      value = row.get(field)
+      if value is None or value == '':
+        row_values.append('')
+      else:
+        row_values.append(value)  # Keep original type (int, float, str)
 
     if date_str in existing_by_date:
       # Update existing row
       row_num = existing_by_date[date_str]
-      worksheet.update(f'A{row_num}', [row_values])
+      worksheet.update(f'A{row_num}', [row_values], value_input_option='USER_ENTERED')
       print(f"  Updated row {row_num} for {date_str}")
       updates_count += 1
     else:
       # Append new row
-      worksheet.append_row(row_values)
+      worksheet.append_row(row_values, value_input_option='USER_ENTERED')
       print(f"  Inserted new row for {date_str}")
       inserts_count += 1
 
